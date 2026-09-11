@@ -1,6 +1,6 @@
 {
   "name": "memvault-obsidian",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "license": "MIT",
   "main": "out/main.js",
   "scripts": {
@@ -12,8 +12,11 @@
   "devDependencies": {
     "@types/node": "^26.2.0",
     "esbuild": "^0.28.2",
+    "eslint": "^9.39.4",
+    "eslint-plugin-obsidianmd": "^0.4.2",
     "obsidian": "^1.4.0",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.70.0",
     "vitest": "^4.1.11"
   }
 }
