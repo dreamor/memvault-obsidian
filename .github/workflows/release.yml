@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write  # required by actions/attest-build-provenance (OIDC)
 
 jobs:
   release:
@@ -37,6 +38,16 @@ jobs:
       - name: Build
         run: npm run build
 
+      # Cryptographic build provenance for the release assets (requested by
+      # the community directory review). Attestations attach to the repo's
+      # attestation store — verify with `gh attestation verify <file>`.
+      - name: Attach build provenance attestations
+        uses: actions/attest-build-provenance@v4.2.2
+        with:
+          subject-path: |
+            out/main.js
+            styles.css
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3
         with:
@@ -44,5 +55,4 @@ jobs:
             out/main.js
             manifest.json
             styles.css
-            versions.json
           generate_release_notes: true
