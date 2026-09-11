@@ -15,14 +15,23 @@ jobs:
     name: Build and publish release assets
     runs-on: ubuntu-latest
     steps:
+      # Thin-shell release repo: the source of truth is the monorepo
+      # (dreamor/memvault, obsidian-plugin/). It is public, so checking it
+      # out needs no token; anything the portal review requires at repo
+      # root stays resident here (README/LICENSE/manifest.json/versions.json).
       - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
+        with:
+          repository: dreamor/memvault
+          path: mono
 
-      - name: Verify tag matches manifest version
+      - name: Verify tag agrees with both manifests (shell + monorepo)
         run: |
           tag="${GITHUB_REF_NAME#v}"
           ver=$(node -p "require('./manifest.json').version")
-          if [ "$tag" != "$ver" ]; then
-            echo "::error::tag ${GITHUB_REF_NAME} does not match manifest version ${ver}"
+          ver_mono=$(node -p "require('./mono/obsidian-plugin/manifest.json').version")
+          if [ "$tag" != "$ver" ] || [ "$tag" != "$ver_mono" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} / shell manifest ${ver} / monorepo manifest ${ver_mono} disagree"
             exit 1
           fi
 
@@ -31,13 +40,23 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
+        working-directory: mono/obsidian-plugin
         run: npm ci
 
       - name: Typecheck
+        working-directory: mono/obsidian-plugin
         run: npm run typecheck
 
       - name: Build
+        working-directory: mono/obsidian-plugin
         run: npm run build
+
+      - name: Stage assets at workspace root
+        run: |
+          mkdir -p out
+          cp mono/obsidian-plugin/out/main.js out/main.js
+          cp mono/obsidian-plugin/styles.css styles.css
+          cp mono/obsidian-plugin/manifest.json manifest.json
 
       # Cryptographic build provenance for the release assets (requested by
       # the community directory review). Attestations attach to the repo's
