@@ -25,13 +25,17 @@ jobs:
           repository: dreamor/memvault
           path: mono
 
-      - name: Verify tag agrees with both manifests (shell + monorepo)
+      - name: Verify the tag equals both manifests' version exactly (shell + monorepo)
+        # Deliberately NO `v` stripping: Obsidian resolves an installable release
+        # by a tag IDENTICAL to manifest.json's version. Normalizing here would let
+        # a `v0.3.4` tag pass while the community store silently keeps serving the
+        # previous version, so any prefix must fail loudly instead.
         run: |
-          tag="${GITHUB_REF_NAME#v}"
+          tag="${GITHUB_REF_NAME}"
           ver=$(node -p "require('./manifest.json').version")
           ver_mono=$(node -p "require('./mono/obsidian-plugin/manifest.json').version")
           if [ "$tag" != "$ver" ] || [ "$tag" != "$ver_mono" ]; then
-            echo "::error::tag ${GITHUB_REF_NAME} / shell manifest ${ver} / monorepo manifest ${ver_mono} disagree"
+            echo "::error::tag '${tag}' vs shell manifest '${ver}' vs monorepo manifest '${ver_mono}' — the tag must be the bare manifest version (no 'v' prefix); Obsidian matches releases by a tag identical to the manifest version"
             exit 1
           fi
 
